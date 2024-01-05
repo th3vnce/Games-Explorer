@@ -1,0 +1,57 @@
+﻿<!-- index.html -->
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>Games Explorer</title>
+</head>
+
+<body>
+  <h1>Games Explorer</h1>
+  <label for="searchInput">Search Game:</label>
+  <input type="text" id="searchInput">
+  <button onclick="searchGame()">Search</button>
+  <!-- Add more buttons as needed for other functionalities -->
+
+  <div id="results"></div>
+
+  <script>
+    async function searchGame() {
+      const searchInput = document.getElementById('searchInput').value;
+      try {
+        const games = await window.electron.ipcRenderer.invoke('searchGame', searchInput);
+        displayResults(games);
+      } catch (error) {
+        console.error(error.message);
+      }
+    }
+
+    async function displayResults(games) {
+    const resultsContainer = document.getElementById('results');
+    resultsContainer.innerHTML = '';
+
+    for (const game of games) {
+      try {
+        const grids = await window.electron.ipcRenderer.invoke('getGridsById', game.id);
+        const imageUrl = grids[0]?.url || ''; // Use the first grid's URL or an empty string if not available
+
+        const gameElement = document.createElement('div');
+        gameElement.innerHTML = `
+          <p>ID: ${game.id}</p>
+          <p>Name: ${game.name}</p>
+          <img src="${imageUrl}" alt="${game.name}">
+          <hr>
+        `;
+        resultsContainer.appendChild(gameElement);
+      } catch (error) {
+        console.error(`Failed to fetch grids for game ${game.id}: ${error.message}`);
+      }
+    }
+  }
+
+</script>
+</body>
+
+</html>
+<!-- all -->
