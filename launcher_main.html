@@ -1,0 +1,106 @@
+<!-- launcher_main.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Games Explorer</title>
+
+    <style>
+        body {
+            background-color: #20252a;
+            color: #f5f5f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #searchContainer {
+            display: flex;
+            margin-top: 20px;
+        }
+
+        #searchInput {
+            margin-right: 10px;
+        }
+
+        #gameContainer {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .game-card {
+            margin: 10px;
+            padding: 10px;
+            border: 1px solid #333;
+            border-radius: 5px;
+            max-width: 100px;
+            text-align: center;
+        }
+
+        .game-image {
+            max-width: 80px;
+            max-height: 120px;
+        }
+    </style>
+
+</head>
+
+<body>
+    <h1>Games Explorer</h1>
+
+    <div id="searchContainer">
+        <input type="text" id="searchInput" placeholder="Search Game">
+        <button onclick="searchGame()">Search</button>
+    </div>
+
+    <div id="gameContainer"></div>
+
+    <script>
+        async function searchGame() {
+            const searchInput = document.getElementById('searchInput').value;
+            try {
+                const games = await window.electron.ipcRenderer.invoke('searchGame', searchInput);
+                displayResults(games);
+            } catch (error) {
+                console.error(error.message);
+            }
+        }
+
+        async function displayResults(games) {
+        const gameContainer = document.getElementById('gameContainer');
+        gameContainer.innerHTML = '';
+
+        for (const game of games) {
+            try {
+                const grids = await window.electron.ipcRenderer.invoke('getGridsById', game.id);
+                const imageUrl = grids[0]?.url || 'path/to/placeholder-image.jpg'; // Use the first grid's URL or a placeholder image
+
+                const gameCard = document.createElement('div');
+                gameCard.classList.add('game-card');
+
+                const gameImage = document.createElement('img');
+                gameImage.classList.add('game-image');
+                gameImage.src = imageUrl;
+
+                const gameName = document.createElement('p');
+                gameName.innerText = game.name;
+
+                gameCard.appendChild(gameImage);
+                gameCard.appendChild(gameName);
+
+                gameContainer.appendChild(gameCard);
+            } catch (error) {
+                console.error(`Failed to fetch grids for game ${game.id}: ${error.message}`);
+            }
+        }
+    }
+</script>
+
+</body>
+
+</html>
